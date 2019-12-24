@@ -13,6 +13,7 @@ from numpy.linalg import matrix_rank
 from numpy.linalg import inv
 import time
 
+
 #submatrix = np.zeros(shape=(numberNodes,numberDecoder))
 def populateMatrix(nRows, nColumns):
 	matrix=np.random.rand(nRows,nColumns)
@@ -33,12 +34,11 @@ def produceGM(total_nRows,minimum_nRows):
 comm = MPI.COMM_WORLD
 worldSize = comm.Get_size()
 rank = comm.Get_rank()
-column=2
+column=1
 r=int(sys.argv[1])
-elements=int(sys.argv[2])
-#pValue=int(sys.argv[3])
+elements=int(sys.argv[2]) #Should be the integer with factor 100
 num_iteration=int(sys.argv[3])
-
+num_chunk=10000
 offset=np.zeros((1,worldSize-1))
 pvalue=np.zeros((1,worldSize-1))
 for j in range(0,worldSize-1):
@@ -47,21 +47,36 @@ for j in range(0,worldSize-1):
 totalrows=np.sum(offset)
 #print(pvalue)
 if rank==0:
+	#print('start')
 	H = produceGM (totalrows+100,r)
 	A = populateMatrix(r,elements)
 	offsetSum=np.cumsum(offset)
+	#print('Matrix Generation Done')
 	for j in range(1,worldSize-1):
 		if(j==1):
-			matrixNode=np.zeros(shape=(int(offset[0,j-1]),elements))
+			#matrixNode=np.zeros(shape=(int(offset[0,j-1]),elements))
 			matrixNode=np.matmul(H[0:int(offsetSum[j-1]),:],A)
-			comm.send(matrixNode,dest=1,tag=1)
-		matrixNode=np.zeros(shape=(int(offset[0,j]),elements))
+			#print('Computation Done')
+			#column_size=matrixNode.shape[1]
+			for l in range(int(elements/num_chunk)):
+				#print('Send Start', rank,l)
+				comm.send(matrixNode[:,l*num_chunk:(l+1)*num_chunk],dest=1,tag=100+l)
+				#print('Send Start', rank,l)
+		#matrixNode=np.zeros(shape=(int(offset[0,j]),elements))
 		matrixNode=np.matmul(H[int(offsetSum[j-1]):int(offsetSum[j]),:],A)
-		comm.send(matrixNode,dest=j+1,tag=j+1)
+		for l in range(int(elements/num_chunk)):		
+			comm.send(matrixNode[:,l*num_chunk:(l+1)*num_chunk],dest=j+1,tag=100*(j+1)+l)
+		#print('Matrix Sent Done')	
 
 if rank!=0:
-	matrixRecv=comm.recv(source=0,tag=rank)
-
+	#print('Worker Node Matrix Receive Start')
+	matrixRecv=comm.recv(source=0,tag=rank*100)
+	#matrixRecv=np.zeros((int(offset[0,rank-1]),1))
+	for l in range(1,int(elements/num_chunk)):
+		matrixRecvTemp=comm.recv(source=0,tag=rank*100+l)
+		matrixRecv=np.concatenate((matrixRecv,matrixRecvTemp),axis=1)
+	#matrixRecv = np.delete(matrixRecv, 0, 1)
+	#print('Worker Node Matrix Receive Done')
 for k in range(num_iteration):
 	comm.Barrier()
 	time.sleep(1)
@@ -72,7 +87,7 @@ for k in range(num_iteration):
 		for j in range(1,worldSize):	
 			comm.send(x,dest=j,tag=10*j+k)	
 
-	if rank==1:
+	if rank!=17 or rank!=15 or rank!=4 or rank!=11:
 		recv_x=comm.recv(source=0,tag=rank*10+k)
 		batch_size=int(np.ceil(matrixRecv.shape[0]/pvalue[0,rank-1]))
 		for j in range(int(pvalue[0,rank-1]-1)):
@@ -87,7 +102,7 @@ for k in range(num_iteration):
 		waitT4=MPI.Wtime()
 		time.sleep(3*(waitT4-waitT3))
 		comm.send(matrixResFinal,dest=0,tag=rank+80)
-	if rank>1:
+	elif rank!=0:
 		recv_x=comm.recv(source=0,tag=rank*10+k)
 		batch_size=int(np.ceil(matrixRecv.shape[0]/pvalue[0,rank-1]))
 		for j in range(int(pvalue[0,rank-1]-1)):

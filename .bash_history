@@ -53,3 +53,54 @@ sudo apt-get install libopenmpi-dev
 sudo pip install mpi4py
 ls
 exit
+ls
+s
+ls
+cat batch20000_17 
+ls
+sudo apt-get install ksh 
+./LoginAllNodes.sh 
+ls
+mv nodeIPaddressBackup nodeIPaddress
+ls
+./LoginAllNodes.sh 
+nano nodeIPaddress 
+./ComputationInstancesLarge.sh 
+ssh 18.224.4.151
+ls
+./ComputationInstancesLarge.sh 
+cat hcmm10000_5 
+rm hcmm10000_5 
+ls
+cat load20000_17 
+ls
+mv load20000_17 hcmm20000_17
+cat batch20000_17 
+cat batchOverhead20000_17 
+mv batchOverhead20000_17 
+rm batchOverhead20000_17 
+cat batchZeroOverhead20000_17 
+ls
+rm batchLoadOverhead20000_17 
+ls
+./ComputationInstancesLarge.sh 
+cls
+cat batch20000_17 
+ls
+./ComputationInstancesLarge.sh 
+ls
+git init 
+git commit -m 'first' 
+git add .
+git commit -m 'first' 
+git remote add origin https://github.com/herculesPaulWang/AmazonEC2LargeScale.git
+git push -u origin master
+ls
+cat 3batchOverhead1000020 
+ls
+./LoginAllNodes.sh 
+ls
+./ComputationInstancesLarge.sh 
+ls
+cat 3batchTheory1000020 
+cat 3batchOverhead1000020 
