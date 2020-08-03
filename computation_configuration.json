@@ -1,5 +1,10 @@
 {
-"A_dimension": [10000, 5000],
-"H_dimension": [15000, 10000],
-"worker_node_load": [5000, 6000, 4000]
+"num_iteration": 1,
+"A_dimension": [2000, 400],
+"A_hat_dimension": [4000, 400],
+"worker_node_load_index": [[0, 2500], [2500, 3000], [3000,4000]],
+"worker_batch_p_value": [2500, 500, 1000],
+"interval": 100,
+"delta": 0.01,
+"c": 3.4
 }
