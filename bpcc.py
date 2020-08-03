@@ -76,10 +76,10 @@ for k in range(num_iteration):
         while True:
             if(aggregated_rows>=A_dim[0]):
                 break;
-            req = comm.irecv(source=MPI.ANY_SOURCE, tag=k)
+            data=comm.recv(source=MPI.ANY_SOURCE, tag=k)
             #print(aggregated_rows)
             #print('b')
-            data = req.wait()
+            #data = req.wait()
             #print(data[0])
             aggregated_results.append(data)
             aggregated_rows+=data[0][1]-data[0][0]
@@ -110,7 +110,7 @@ for k in range(num_iteration):
             matrixRes = np.matmul(A_worker[i*batch_size:(i+1)*batch_size,:],recv_x)
             index = [start_index+i*batch_size, start_index+(i+1)*batch_size]
             data = [index, matrixRes]
-            req=comm.isend(data, dest=0, tag=k)
+            comm.send(data, dest=0, tag=k)
             #print(index, matrixRes.shape[0])
 
         # Final batch computation result
