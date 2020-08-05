@@ -2,6 +2,7 @@ import numpy as np
 import math
 import random
 import time
+import copy
 
 random.seed(30)
 np.random.seed(30)
@@ -20,6 +21,7 @@ class LT_Code():
         self.c = c
         self.m = m
         self.n = n
+
         # Set the random seed
 
         self.construct_degrees_indexes()
@@ -32,22 +34,28 @@ class LT_Code():
     def get_degrees (self):
         prob_d = self.robust_soliton_distribution()
         population = list(range(1,self.m+1))
-        return random.choices(population, prob_d, k=self.n)
+        return np.random.choice(population, self.n, p=prob_d)#random.choices(population, prob_d, k=self.n)
 
     def robust_soliton_distribution(self):
         R = self.c*math.log(self.m/self.delta)*math.sqrt(self.m)
         rho_d = []
         rho_d = [R/(1*self.m)+1/self.m] # d=1
-        rho_d += [R/(d*self.m)+1/(self.m*(self.m-1)) for d in range(2, int(self.m/R))]
-        rho_d += [R*math.log(R/self.delta)/self.m+1/(self.m*(self.m-1)) for d in range(int(self.m/R),int(self.m/R)+1)]
-        rho_d += [1/(self.m*(self.m-1)) for d in range(int(self.m/R)+1, self.m+1)]
-
+        #print(len(rho_d))
+        rho_d += [R/(d*self.m)+1/(self.m*(self.m-1)) for d in range(2, int(np.ceil(self.m/R)))]
+        #print(len(rho_d))
+        rho_d += [R*math.log(R/self.delta)/self.m+1/(self.m*(self.m-1)) for d in range(int(np.ceil(self.m/R)),int(np.ceil(self.m/R))+1)]
+        #print(len(rho_d))
+        rho_d += [1/(self.m*(self.m-1)) for d in range(int(np.ceil(self.m/R))+1, self.m+1)]
         rho_sum = sum(rho_d)
+        #print(len(rho_d))
+        #print(int(self.m/R))
         prob_d = [rho_d[i]/rho_sum for i in range(self.m)]
+        #print(sum(prob_d))
         return prob_d
 
     def construct_degrees_indexes(self):
         self.random_degrees = self.get_degrees()
+        #print(self.random_degrees)
         #print(self.random_degrees)
         self.list_indexes =[]
         self.list_degrees =[]
@@ -55,21 +63,27 @@ class LT_Code():
             selection_indexes = self.sample_indexes(i, self.random_degrees[i])
             self.list_indexes.append(selection_indexes)
             self.list_degrees.append(self.random_degrees[i])
+
+        self.backup_list_indexes = copy.deepcopy(self.list_indexes)
+        self.backup_list_degrees = copy.deepcopy(self.list_degrees)
+        print(max(self.list_degrees))
             #assert len(selection_indexes) == self.random_degrees[i]
 
 
     def construct_symbols(self, aggregated_result):
         #The aggregated result is [[index, matRes], [index, matRes], [index, matRes]]
         #self.construct_degrees_indexes()
-
+        self.list_indexes = copy.deepcopy(self.backup_list_indexes)
+        self.list_degrees = copy.deepcopy(self.backup_list_degrees)
+        print(max(self.list_degrees))
         symbols=[]
         for data in aggregated_result:
             for i in range(data[1].shape[0]):
 
                 #print(data[1].shape[0])
                 index=data[0][0]+i
-                if(index == 4000):
-                    print('error is', data[0][0], index)
+                #if(index == 4000):
+                    #print('error is', data[0][0], index)
                 symbol = Symbol(index, self.list_degrees[index], data[1][i,:], self.list_indexes[index])
                 symbols.append(symbol)
                 #print(data[1].shape[0],index, symbol.data, symbol.degree, symbol.neighbors, self.list_indexes )
@@ -81,9 +95,9 @@ class LT_Code():
 
         start_time = time.time()
         symbols = self.construct_symbols(aggregared_result)
-        print(len(symbols))
+        #print(len(symbols))
         end_time = time.time()
-        #print('construct_symbols done', end_time - start_time)
+        print('construct_symbols done', end_time - start_time)
         num_symbols = len(symbols)
         recovered_count = 0
         Ax = [None] * self.m
@@ -91,6 +105,7 @@ class LT_Code():
         iteration_solved_count = 0
         while iteration_solved_count > 0 or recovered_count == 0:
             iteration_solved_count = 0
+            print('1')
             for i, symbol in enumerate(symbols):
                 if symbol.degree == 1:
                     #print('Index is', symbol.index)

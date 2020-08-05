@@ -41,13 +41,16 @@ node_id = comm.Get_rank()
 MASTER = 0
 
 if node_id == MASTER:
-    A_file = tb.open_file('A_matrix.h5', mode='r', title="A_matrix")
-    A = A_file.root.A
-    A = A[:,:]
-    A_file.close()
-    x = np.random.randint(3, size=(A_dim[1],1))
-    ground_truth = np.matmul(A,x)
+    # A_file = tb.open_file('A_matrix.h5', mode='r', title="A_matrix")
+    # A = A_file.root.A
+    # A = A[:,:]
+    # A_file.close()
     lt_code = LT_Code(delta, c, A_dim[0] ,A_hat_dim[0])
+    x = np.random.randint(3, size=(A_dim[1],1))
+    decoding_time = []
+    total_run_time = []
+    #ground_truth = np.matmul(A,x)
+
 
 
 if node_id != MASTER:
@@ -62,21 +65,22 @@ for k in range(num_iteration):
 
         start=time.time()
         #Send x to each worker
-        print('Start sending X')
+        #print('Start sending X')
         for j in range(num_workers):
             comm.send(x, dest = j+1, tag = k)
-        print('X sent')
+        #print('X sent')
 
-        print('Waiting results')
+        #print('Waiting results')
 
         aggregated_results=[]
         aggregated_rows=0
         #aggregated_rows =[]
         #print('a')
         while True:
-            if(aggregated_rows>=A_dim[0]):
+            if(aggregated_rows>=A_hat_dim[0]):
                 break;
-            data=comm.recv(source=MPI.ANY_SOURCE, tag=k)
+            req=comm.irecv(source=MPI.ANY_SOURCE, tag=k)
+            data=req.wait()
             #print(aggregated_rows)
             #print('b')
             #data = req.wait()
@@ -85,18 +89,22 @@ for k in range(num_iteration):
             aggregated_rows+=data[0][1]-data[0][0]
 
 
-        print('Getting enough results')
+        #print('Getting enough results')
         #Decoding step
-        print('Start Decoding')
+        #print('Start Decoding')
         start_decoding_time = time.time()
         decoded_result = lt_code.lt_decode(aggregated_results)
-        print('Decoding Done')
+        #print('Decoding Done')
         end_decoding_time = time.time()
-        print('Iteration %d decoding time is' %k, end_decoding_time - start_decoding_time)
-        print('Iteration %d total time is' %k, end_decoding_time - start)
+        print('Iteration', k)
+        #print('Iteration %d decoding time is' %k, end_decoding_time - start_decoding_time)
+        #print('Iteration %d total time is' %k, end_decoding_time - start)
         #print(decoded_result)
         #print(ground_truth)
         #print()
+        decoding_time.append(end_decoding_time - start_decoding_time)
+        total_run_time.append(end_decoding_time - start)
+
     if node_id != MASTER:
         #Recv x from master
         start_index = worker_load[node_id-1][0]
@@ -106,17 +114,29 @@ for k in range(num_iteration):
         batch_size=int(np.ceil(load/worker_batch_number[node_id-1]))
 
         recv_x = comm.recv(source=0, tag=k)
+        c_time=0
         for i in range(num_batch-1):
+            c_time1=time.time()
             matrixRes = np.matmul(A_worker[i*batch_size:(i+1)*batch_size,:],recv_x)
+            c_time2=time.time()
+            c_time+=c_time2-c_time1
             index = [start_index+i*batch_size, start_index+(i+1)*batch_size]
             data = [index, matrixRes]
-            comm.send(data, dest=0, tag=k)
+            comm.isend(data, dest=0, tag=k)
             #print(index, matrixRes.shape[0])
-
+        print(node_id, c_time)
         # Final batch computation result
         matrixResFinal=np.matmul(A_worker[(num_batch-1)*batch_size:,:],recv_x)
         index = [start_index+(num_batch-1)*batch_size, end_index]
         #print(index, matrixResFinal.shape[0])
         data = [index, matrixResFinal]
         #time.sleep(3*(waitT2-waitT1))
-        comm.send(data,dest=0,tag=k)
+        comm.isend(data,dest=0,tag=k)
+
+# if node_id != MASTER:
+#     A_worker_file.close()
+
+if node_id == MASTER:
+    print('average decoding time is', sum(decoding_time)/len(decoding_time))
+    print('average computation time is', (sum(total_run_time)-sum(decoding_time))/len(decoding_time))
+    print('average total time is', sum(total_run_time)/len(total_run_time))

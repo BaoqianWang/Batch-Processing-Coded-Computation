@@ -12,13 +12,13 @@ worker_load = parameters['worker_node_load_index']
 interval = parameters['interval']
 delta = parameters['delta']
 c = parameters['c']
-
+lt_code = LT_Code(delta, c, A_dim[0] ,A_hat_dim[0])
 #Create A matrix file
 A_matrix_file = tb.open_file('A_matrix.h5', mode='w', title="A_matrix")
 A_root = A_matrix_file.root
 A = A_matrix_file.create_carray(A_root,'A',tb.Float64Atom(),shape=(A_dim[0], A_dim[1]))
 for i in range(0, A_dim[0], interval):
-    A[i:i+interval,:] = np.random.randint(4,size=(interval, A_dim[1]))
+    A[i:i+interval,:] = np.random.randint(4,size=(interval, A_dim[1])).astype('float32')
     #random(size=(interval, A_dim[1])).astype('float32') # Now put in some data
     #print(x[:100,:100])
 #print(A[:,:])
@@ -29,7 +29,7 @@ Encode_A_root = Encode_A_matrix_file.root
 Encode_A = Encode_A_matrix_file.create_carray(Encode_A_root,'Encode_A',tb.Float64Atom(),shape=(A_hat_dim[0], A_hat_dim[1]))
 
 # Start encoding
-lt_code = LT_Code(delta, c, A_dim[0] ,A_hat_dim[0])
+
 #print(lt_code.list_indexes)
 for i in range(A_hat_dim[0]):
     #selection_indexes = sample_indexes(i, lt_code.random_degrees[i], A_dim[0])
