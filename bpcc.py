@@ -79,8 +79,8 @@ for k in range(num_iteration):
         while True:
             if(aggregated_rows>=A_hat_dim[0]):
                 break;
-            req=comm.irecv(source=MPI.ANY_SOURCE, tag=k)
-            data=req.wait()
+            data=comm.recv(source=MPI.ANY_SOURCE, tag=k)
+            #data=req.wait()
             #print(aggregated_rows)
             #print('b')
             #data = req.wait()
@@ -122,7 +122,7 @@ for k in range(num_iteration):
             c_time+=c_time2-c_time1
             index = [start_index+i*batch_size, start_index+(i+1)*batch_size]
             data = [index, matrixRes]
-            comm.isend(data, dest=0, tag=k)
+            comm.send(data, dest=0, tag=k)
             #print(index, matrixRes.shape[0])
         print(node_id, c_time)
         # Final batch computation result
@@ -131,7 +131,7 @@ for k in range(num_iteration):
         #print(index, matrixResFinal.shape[0])
         data = [index, matrixResFinal]
         #time.sleep(3*(waitT2-waitT1))
-        comm.isend(data,dest=0,tag=k)
+        comm.send(data,dest=0,tag=k)
 
 # if node_id != MASTER:
 #     A_worker_file.close()

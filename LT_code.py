@@ -59,6 +59,7 @@ class LT_Code():
         #print(self.random_degrees)
         self.list_indexes =[]
         self.list_degrees =[]
+        
         for i in range(self.n):
             selection_indexes = self.sample_indexes(i, self.random_degrees[i])
             self.list_indexes.append(selection_indexes)
@@ -70,66 +71,84 @@ class LT_Code():
             #assert len(selection_indexes) == self.random_degrees[i]
 
 
-    def construct_symbols(self, aggregated_result):
+    def lt_decode(self, aggregated_result):
         #The aggregated result is [[index, matRes], [index, matRes], [index, matRes]]
         #self.construct_degrees_indexes()
         self.list_indexes = copy.deepcopy(self.backup_list_indexes)
         self.list_degrees = copy.deepcopy(self.backup_list_degrees)
-        print(max(self.list_degrees))
+        #print(max(self.list_degrees))
         symbols=[]
-        for data in aggregated_result:
-            for i in range(data[1].shape[0]):
-
-                #print(data[1].shape[0])
-                index=data[0][0]+i
-                #if(index == 4000):
-                    #print('error is', data[0][0], index)
-                symbol = Symbol(index, self.list_degrees[index], data[1][i,:], self.list_indexes[index])
-                symbols.append(symbol)
-                #print(data[1].shape[0],index, symbol.data, symbol.degree, symbol.neighbors, self.list_indexes )
-                #print('symbol index %d' %index, symbol.degree, symbol.neighbors)
-        return symbols
-
-
-    def lt_decode(self, aggregared_result):
-
-        start_time = time.time()
-        symbols = self.construct_symbols(aggregared_result)
-        #print(len(symbols))
-        end_time = time.time()
-        print('construct_symbols done', end_time - start_time)
-        num_symbols = len(symbols)
-        recovered_count = 0
         Ax = [None] * self.m
-        #print('Recovered candidate Ax', Ax)
-        iteration_solved_count = 0
-        while iteration_solved_count > 0 or recovered_count == 0:
-            iteration_solved_count = 0
-            print('1')
-            for i, symbol in enumerate(symbols):
-                if symbol.degree == 1:
-                    #print('Index is', symbol.index)
-                    #print('Neighbor', symbol.neighbors)
-                    iteration_solved_count += 1
-                    #print(symbol.neighbors)
-                    index = symbol.neighbors[0]
-                    symbols.pop(i)
-                    if Ax[index] is not None:
-                        continue
-                    Ax[index] = symbol.data
-                    self.reduce_neighbors(index, Ax, symbols)
-                    recovered_count += 1
-        print('Recovered_count is', recovered_count)
+        recovered_index = []
+        iteration=0
+
+        while iteration < 2:
+            for data in aggregated_result:
+                for i in range(data[1].shape[0]):
+                    #print(data[1].shape[0])
+                    index=data[0][0]+i
+
+                    if(len(self.list_indexes[index]) == 1):
+                        if(Ax[self.list_indexes[index][0]] is None):
+                            recovered_index.append(self.list_indexes[index][0])
+                            Ax[self.list_indexes[index][0]] = data[1][i,:]
+                            recovered_count = 1
+                    else:
+                        for item in self.list_indexes[index]:
+                            if item in recovered_index:
+                                self.list_indexes[index].remove(item)
+
+            iteration+=1
+            print(iteration)
+                    #if(index == 4000):
+                        #print('error is', data[0][0], index)
+                    # symbol = Symbol(index, self.list_degrees[index], data[1][i,:], self.list_indexes[index])
+                    # symbols.append(symbol)
+                    #print(data[1].shape[0],index, symbol.data, symbol.degree, symbol.neighbors, self.list_indexes )
+                    #print('symbol index %d' %index, symbol.degree, symbol.neighbors)
 
         return Ax
 
-    def reduce_neighbors(self, index, Ax, symbols):
-        for other_symbol in symbols:
-            if other_symbol.degree > 1 and index in other_symbol.neighbors:
-                other_symbol.data = other_symbol.data-Ax[index]
-                other_symbol.neighbors.remove(index)
-                other_symbol.degree -= 1
-        return
+
+    # def lt_decode(self, aggregared_result):
+    #
+    #     start_time = time.time()
+    #     symbols = self.construct_symbols(aggregared_result)
+    #     #print(len(symbols))
+    #     end_time = time.time()
+    #     print('construct_symbols done', end_time - start_time)
+    #     num_symbols = len(symbols)
+    #     recovered_count = 0
+    #     Ax = [None] * self.m
+    #     #print('Recovered candidate Ax', Ax)
+    #     iteration_solved_count = 0
+    #     while iteration_solved_count > 0 or recovered_count == 0:
+    #         iteration_solved_count = 0
+    #         print('1')
+    #         for i, symbol in enumerate(symbols):
+    #             if symbol.degree == 1:
+    #                 #print('Index is', symbol.index)
+    #                 #print('Neighbor', symbol.neighbors)
+    #                 iteration_solved_count += 1
+    #                 #print(symbol.neighbors)
+    #                 index = symbol.neighbors[0]
+    #                 symbols.pop(i)
+    #                 if Ax[index] is not None:
+    #                     continue
+    #                 Ax[index] = symbol.data
+    #                 self.reduce_neighbors(index, Ax, symbols)
+    #                 recovered_count += 1
+    #     print('Recovered_count is', recovered_count)
+    #
+    #     return Ax
+    #
+    # def reduce_neighbors(self, index, Ax, symbols):
+    #     for other_symbol in symbols:
+    #         if other_symbol.degree > 1 and index in other_symbol.neighbors:
+    #             other_symbol.data = other_symbol.data-Ax[index]
+    #             other_symbol.neighbors.remove(index)
+    #             other_symbol.degree -= 1
+    #     return
 
 
 

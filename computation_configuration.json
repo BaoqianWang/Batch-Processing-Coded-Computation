@@ -1,5 +1,5 @@
 {
-"num_iteration": 2,
+"num_iteration": 1,
 "A_dimension": [10000, 400],
 "A_hat_dimension": [14000, 400],
 "worker_node_load_index": [[0, 5000], [5000, 9000], [9000,14000]],
