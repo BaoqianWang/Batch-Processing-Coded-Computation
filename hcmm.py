@@ -9,12 +9,21 @@ import sys
 import numpy as np
 from numpy.linalg import inv
 import copy
+import argparse
 from numpy.linalg import matrix_rank
 from numpy.linalg import inv
 import time
 import json
 import tables as tb
 from LT_code import *
+
+def parse_args():
+    parser = argparse.ArgumentParser("Coded Matrix Multiplication Parser")
+    # Environment
+    parser.add_argument("--scenario", type=str, default="uncoded", help="computation schemes including uncoded, hcmm, load-balanced, bpcc")
+    return parser.parse_args()
+
+arglist = parse_args()
 
 
 
@@ -23,7 +32,11 @@ with open('computation_configuration.json') as f:
 
 A_dim = parameters['A_dimension']
 A_hat_dim = parameters['A_hat_dimension']
-worker_load = parameters['worker_node_load_index']
+
+
+worker_load = parameters[arglist.scenario]
+
+
 interval = parameters['interval']
 delta = parameters['delta']
 c = parameters['c']
@@ -36,21 +49,21 @@ node_id = comm.Get_rank()
 MASTER = 0
 
 if node_id == MASTER:
-    #A_file = tb.open_file('A_matrix.h5', mode='r', title="A_matrix")
-    #A = A_file.root.A
-    #A = A[:,:]
-    #A_file.close()
+    A_file = tb.open_file('A_matrix.h5', mode='r', title="A_matrix")
+    A = A_file.root.A
+    A = A[:,:]
+    A_file.close()
     lt_code = LT_Code(delta, c, A_dim[0] ,A_hat_dim[0])
     x = np.random.randint(3, size=(A_dim[1],1))
     decoding_time = []
     total_run_time = []
-    #ground_truth = np.matmul(A,x)
+    ground_truth = np.matmul(A,x)
 
     #print('lt code list indexes', lt_code.list_indexes)
     #print('lt code list degree', lt_code.list_degrees)
     #print('A', A)
     #print('x', x)
-    #print(ground_truth)
+    print(ground_truth)
 
 if node_id != MASTER:
     A_worker_file = tb.open_file('A_worker%d.h5' %node_id, mode='r', title="A_worker%d" %node_id)
@@ -80,27 +93,24 @@ for k in range(num_iteration):
         #aggregated_rows =[]
         #print('a')
         while True:
-            if(aggregated_rows>=A_hat_dim[0]):
+            if(len(aggregated_results)>=A_hat_dim[0]):
                 break;
-            req = comm.irecv(source=MPI.ANY_SOURCE, tag=k)
+            data = comm.recv(source=MPI.ANY_SOURCE, tag=k)
             #print('b')
-            data = req.wait()
-            aggregated_results.append(data)
-            aggregated_rows+=data[0][1]-data[0][0]
+            #data = req.wait()
+            aggregated_results+=data
 
+        #print(aggregated_results)
 
-        #print('Getting enough results')
-        #Decoding step
-        #print('Start Decoding')
         start_decoding_time = time.time()
         decoded_result = lt_code.lt_decode(aggregated_results)
 
-        #print(decoded_result)
+        print(decoded_result)
         #print('Decoding Done')
         end_decoding_time = time.time()
         #print('Iteration %d decoding time is' %k, end_decoding_time - start_decoding_time)
         #print('Iteration %d total time is' %k, end_decoding_time - start)
-        print('Iteration', k)
+        #print('Iteration', k)
 
         decoding_time.append(end_decoding_time - start_decoding_time)
         total_run_time.append(end_decoding_time - start)
@@ -112,11 +122,14 @@ for k in range(num_iteration):
         #print(A_worker.dtype)
         c_time1 = time.time()
         matrixRes = np.matmul(A_worker,recv_x)
+        data = []
+        for i, row in enumerate(matrixRes):
+            single_result=[row, i+index[0]]
+            data.append(single_result)
         c_time2 = time.time()
-        print(node_id, c_time2-c_time1)
-        data = [index, matrixRes]
-        #print("Send", data)
-        comm.isend(data, dest=0, tag=k)
+
+        # Send computed data
+        comm.send(data, dest=0, tag=k)
 
 # if node_id != MASTER:
 #     A_worker_file.close()

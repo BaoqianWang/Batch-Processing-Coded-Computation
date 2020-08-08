@@ -2,13 +2,24 @@ import json
 import numpy as np
 import tables as tb
 from LT_code import *
+import argparse
+
+def parse_args():
+    parser = argparse.ArgumentParser("Coded Matrix Multiplication Parser")
+    # Environment
+    parser.add_argument("--scenario", type=str, default="uncoded", help="computation schemes including uncoded, hcmm, load-balanced, bpcc")
+    return parser.parse_args()
+
+arglist = parse_args()
+
+
 ## Read parameters
 with open('computation_configuration.json') as f:
     parameters = json.load(f)
 
 A_dim = parameters['A_dimension']
 A_hat_dim = parameters['A_hat_dimension']
-worker_load = parameters['worker_node_load_index']
+worker_load = parameters[arglist.scenario]
 interval = parameters['interval']
 delta = parameters['delta']
 c = parameters['c']
@@ -45,6 +56,9 @@ worker_load_file = [tb.open_file('A_worker%d.h5' %(i+1), mode='w', title="A_work
 index = 0
 for i in range(len(worker_load)):
     load_worker = worker_load_file[i].create_carray(worker_load_file[i].root,'A_worker', tb.Float64Atom(),shape=(worker_load[i][1]-worker_load[i][0], A_dim[1]))
+
+
+
     load_worker[:,:] = Encode_A[worker_load[i][0]:worker_load[i][1],:]
     #print(load_worker)
 

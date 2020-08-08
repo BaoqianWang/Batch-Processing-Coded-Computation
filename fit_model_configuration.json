@@ -1,0 +1,6 @@
+{
+"num_iteration": 100,
+"x_dimension": [500000, 1],
+"worker_node_load_index": [100, 200, 300, 400, 500, 600, 700, 800, 900, 1000],
+"interval": 1000
+}
