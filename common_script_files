@@ -5,3 +5,5 @@ LT_code.py
 computation_configuration.json
 LoginAllNodes.sh
 ComputationInstancesLarge.sh
+transfer_worker_load.sh
+create_encoded_matrix_direct.py

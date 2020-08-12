@@ -8,7 +8,7 @@ import time
 def parse_args():
     parser = argparse.ArgumentParser("Coded Matrix Multiplication Parser")
     # Environment
-    parser.add_argument("--scenario", type=str, default="uncoded", help="computation schemes including uncoded, hcmm, load-balanced, bpcc")
+    parser.add_argument("--scenario", type=str, default="hcmm", help="computation schemes including uncoded, hcmm, load-balanced, bpcc")
     parser.add_argument("--create", action="store_true",  default=False)
 
     return parser.parse_args()
@@ -22,12 +22,10 @@ with open('computation_configuration.json') as f:
 A_dim = parameters['A_dimension']
 worker_load = parameters[arglist.scenario]
 coded_length = sum([each_load[1] - each_load[0] for each_load in worker_load])
-print(coded_length)
 interval = parameters['interval']
 delta = parameters['delta']
 c = parameters['c']
 lt_code = LT_Code(delta, c, A_dim[0], coded_length)
-
 start_time = time.time()
 #Create A matrix file
 if (arglist.create):

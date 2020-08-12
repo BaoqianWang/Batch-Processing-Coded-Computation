@@ -9,23 +9,14 @@ do
 done < $filename1
 
 
-#Transfer files to worker.
-filename2='common_script_files'
-while read line; do
-  for ((i=1;i<=num_nodes;i++))
-  do
-      scp -i ~/AmazonEC2/.ssh/linux_key_pari.pem  $line ubuntu@${ARRAY[i]}:~
-      echo "Transfer $i to $line Done "
-  done
-done < $filename2
 
 
 #Transfer worker load to each worker
-# for ((i=1;i<=num_nodes-1;i++))
-# do
-#     scp -i ~/AmazonEC2/.ssh/linux_key_pari.pem  A_worker$i.h5 ubuntu@${ARRAY[i+1]}:~
-#     echo "Transfer A_worker$i to ${ARRAY[i+1]} Done "
-# done
+for ((i=1;i<=num_nodes-1;i++))
+do
+    scp  A_worker$i.h5 ubuntu@${ARRAY[i+1]}:~
+    echo "Transfer A_worker$i to ${ARRAY[i+1]} Done "
+done
 #scp -i ~/AmazonEC2/.ssh/linux_key_pari.pem  A_worker3.h5 ubuntu@${ARRAY[4]}:~
 
 # # Transfer files to master.
