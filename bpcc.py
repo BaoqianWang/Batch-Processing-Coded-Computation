@@ -54,7 +54,7 @@ interval = parameters['interval']
 delta = parameters['delta']
 c = parameters['c']
 LEARNERS = [2,3,4,5,6]
-num_straggler = 1
+num_straggler = 2
 
 
 
@@ -70,7 +70,7 @@ if node_id == MASTER:
     # A = A[:,:]
     # A_file.close()
     lt_code = LT_Code(delta, c, A_dim[0], coded_length)
-    x = np.random.randint(3, size=(A_dim[1],1))
+    x = np.random.randint(3, size=(A_dim[1],1),dtype='int32')
     #decoding_time = []
     total_run_time = []
     #ground_truth = np.matmul(A,x)
