@@ -29,7 +29,7 @@ Implementation of Batch Processing Coded Computation Used in the paper [BPCC](ht
 - First configure the parameters in `computation_configuration.json` file.
 - Run `create_encoded_matrix.py` to generate encoded matrix.
 - Run `bpcc.py (hcmm.py)` using (num_workers is specifed through parameter `worker_node_load_index`):
-    'mpirun -n [num_workers + 1]' bpcc.py (hcmm.py)
+    `mpirun -n [num_workers + 1]' bpcc.py (hcmm.py)`
 
 
 ## Paper citation
