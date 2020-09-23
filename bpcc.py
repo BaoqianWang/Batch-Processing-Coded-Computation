@@ -47,6 +47,7 @@ if node_id == MASTER:
     A_file.close()
     x = np.random.randint(3, size=(A_dim[1],1))
     ground_truth = np.matmul(A,x)
+    print('Ground Truth', ground_truth)
     lt_code = LT_Code(delta, c, A_dim[0] ,A_hat_dim[0])
 
 
@@ -85,15 +86,16 @@ for k in range(num_iteration):
             aggregated_rows+=data[0][1]-data[0][0]
 
 
-        print('Getting enough results')
+        #print('Getting enough results')
         #Decoding step
-        print('Start Decoding')
+        #print('Start Decoding')
         start_decoding_time = time.time()
         decoded_result = lt_code.lt_decode(aggregated_results)
-        print('Decoding Done')
-        end_decoding_time = time.time()
-        print('Iteration %d decoding time is' %k, end_decoding_time - start_decoding_time)
-        print('Iteration %d total time is' %k, end_decoding_time - start)
+        print('decoded result', decoded_result)
+        #print('Decoding Done')
+        #end_decoding_time = time.time()
+        #print('Iteration %d decoding time is' %k, end_decoding_time - start_decoding_time)
+        #print('Iteration %d total time is' %k, end_decoding_time - start)
         #print(decoded_result)
         #print(ground_truth)
         #print()
